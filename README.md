@@ -1,8 +1,7 @@
 SNL (Simple Network Layer)
 ==========================
 
-    Version: 1.4.0 (2003-11-18)
-    Author:  Clemens Kirchgatterer <clemens@1541.org>
+    Version: 2.0.0 (2014-02-03)
     Purpose: Network Programming Library
     License: GPL
 
