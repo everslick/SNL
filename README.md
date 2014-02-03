@@ -40,13 +40,16 @@ Installation Guide
     change to the source directory      ... cd SNL
     edit the Makefile to fit your needs ... vi Makefile
     compile the library                 ... make
+    create the API documentation        ... make doc
     compile the demo programms          ... make demo
     install the library and headers     ... make install
+    remove binary and object files      ... make clean
 
-    to uninstall library and docs do    ... make uninstall
+    uninstall library and docs          ... make uninstall
 
 
 Feedback
 --------
 
-Please report bugs and feature requests to <clemens@1541.org>.
+Please report bugs and feature requests to <clemens@1541.org> or use the
+issue tracker on github.
