@@ -1,0 +1,24 @@
+PROJECT_NAME          = $(PROJECT)
+PROJECT_NUMBER        = $(VERSION)
+INPUT                 = .
+FILE_PATTERNS         = *.c *.cpp *.h
+HTML_OUTPUT           = html
+MAN_OUTPUT            = man
+OUTPUT_DIRECTORY      = ../doc
+OUTPUT_LANGUAGE       = English
+FULL_PATH_NAMES       = NO
+TAB_SIZE              = 3
+QUIET                 = YES
+WARN_FORMAT           = "$file:$line: $text"
+RECURSIVE             = YES
+GENERATE_MAN          = YES
+GENERATE_LATEX        = NO
+GENERATE_RTF          = NO
+EXTRACT_ALL           = NO
+SORT_MEMBER_DOCS      = NO
+GENERATE_TODOLIST     = NO
+GENERATE_BUGLIST      = NO
+GENERATE_TESTLIST     = NO
+INTERNAL_DOCS         = NO
+HIDE_UNDOC_MEMBERS    = YES
+
