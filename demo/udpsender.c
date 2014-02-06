@@ -33,6 +33,7 @@ main(int argc, char **argv) {
 
    for (int i=1; i<argc; i++) {
       if (!strcmp(argv[i], "-h") && (argc>i+1)) host = argv[i+1];
+      if (!strcmp(argv[i], "-k") && (argc>i+1)) key  = argv[i+1];
       if (!strcmp(argv[i], "-p") && (argc>i+1)) port = atoi(argv[i+1]);
       if (!strcmp(argv[i], "-s") && (argc>i+1)) size = atoi(argv[i+1]);
       if (!strcmp(argv[i], "-b")) host = NULL;
@@ -43,9 +44,10 @@ main(int argc, char **argv) {
          puts("udpsender " VERSION " <clemens@1541.org>");
          puts("");
          puts("USAGE: udpsender [-h host] [-p port] [-s size]");
-         puts("                 [-b] [-t] [-f]");
+         puts("                 [-k key] [-b] [-t] [-f]");
          puts("");
          puts("\t-h ... host name (default localhost)");
+         puts("\t-k ... set passphrase to <key> (default none)");
          puts("\t-p ... port number (default 3000)");
          puts("\t-b ... use broadcast address (default off)");
          puts("\t-t ... send a packet each timeslice (default off)");

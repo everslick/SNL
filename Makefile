@@ -1,6 +1,6 @@
 -include Makefile.config
 
-TARGETS = src test
+TARGETS = src test demo
 
 DIR := $(shell basename `pwd`)
 

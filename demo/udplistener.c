@@ -84,6 +84,9 @@ main(int argc, char **argv) {
    printf("starting UDP listener on port %i.\n", port);
 
    server = snl_socket_new(SNL_PROTO_UDP, event_callback, NULL);
+
+   snl_passphrase(server, key);
+
    if (snl_listen(server, port)) {
       printf("could not start listener, exiting.\n");
 
