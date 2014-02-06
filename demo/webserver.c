@@ -1,6 +1,5 @@
 //
-// SNL test server
-// Clemens Kirchgatterer <clemens@1541.org>
+// SNL web server
 //
 
 #include <string.h>
@@ -13,7 +12,8 @@
 
 static int shutdown = 0;
 
-static char *ipaddr(unsigned int host, unsigned short port) {
+static const char *
+ipaddr(unsigned int host, unsigned short port) {
 	unsigned char *ip = (unsigned char *)&host;
 	static char buf[32];
 
@@ -31,8 +31,7 @@ quit(int sig) {
 
 static void
 event_callback(snl_socket_t *skt) {
-	const char *msg = "<html>hello, world!</html>";
-	char *info;
+	const char *info, *msg = "<html>hello, world!</html>";
 
 	switch (skt->event_code) {
 		case SNL_EVENT_ERROR:
@@ -57,8 +56,8 @@ event_callback(snl_socket_t *skt) {
 }
 
 int main(int argc, char **argv) {
+	unsigned short int port = 8080;
 	snl_socket_t *server;
-	int port = 8080;
 
 	for (int i=1; i<argc; i++) {
 		if (!strcmp(argv[i], "-p")) port = atoi(argv[i+1]);
@@ -82,6 +81,7 @@ int main(int argc, char **argv) {
 	printf("starting webserver on port %i.\n", port);
 
 	server = snl_socket_new(SNL_PROTO_TCP, event_callback, NULL);
+
 	if (snl_listen(server, port)) {
 		printf("could not start server, exiting.\n");
 
