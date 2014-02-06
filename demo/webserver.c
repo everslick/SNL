@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 
 	printf("starting webserver on port %i.\n", port);
 
-	server = snl_socket_new(SNL_PROTO_RAW, event_callback, NULL);
+	server = snl_socket_new(SNL_PROTO_TCP, event_callback, NULL);
 	if (snl_listen(server, port)) {
 		printf("could not start server, exiting.\n");
 

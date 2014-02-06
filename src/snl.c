@@ -134,7 +134,7 @@ snl_accept(snl_socket_t *skt) {
    fd = skt->file_descriptor;
 
    // set all kinds of fancy socket options
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO,   &sto, sizeof (sto));
       setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,  &flg, sizeof (flg));
       setsockopt(fd, SOL_TCP,    TCP_KEEPCNT,   &cnt, sizeof (cnt));
@@ -151,10 +151,9 @@ snl_accept(snl_socket_t *skt) {
 
 int
 snl_send(snl_socket_t *skt, const void *buf, unsigned int len) {
-   int error = SNL_ERROR_OK, remaining, written;
+   int error = SNL_ERROR_OK;
    unsigned int length;
    int on = 1, off = 0;
-   char *ptr;
 
    // add padding bytes and encrypt
    if (skt->cipher && !(buf = encrypt(skt->cipher, buf, &len))) {
@@ -189,32 +188,18 @@ snl_send(snl_socket_t *skt, const void *buf, unsigned int len) {
    // disable sending of partial frames
    setsockopt(skt->file_descriptor, SOL_TCP, TCP_CORK, &on, sizeof (on));
 
-   if (skt->protocol != SNL_PROTO_RAW) {
+   if (skt->protocol != SNL_PROTO_TCP) {
       // send packet header
-      ptr = (char *)&len;
-      remaining = sizeof (len);
-      while (remaining) {
-         if ((written = write(skt->file_descriptor, ptr, remaining)) == -1) {
-            if (errno == EINTR) continue;
-            error = SNL_ERROR_CLOSED;
-            goto cleanup;
-         }
-         ptr += written;
-         remaining -= written;
+      if (snl_write(skt->file_descriptor, &len, sizeof (len))) {
+         error = SNL_ERROR_CLOSED;
+         goto cleanup;
       }
    }
 
    // send packet payload
-   ptr = (char *)buf;
-   remaining = length;
-   while (remaining) {
-      if ((written = write(skt->file_descriptor, ptr, remaining)) == -1) {
-         if (errno == EINTR) continue;
-         error = SNL_ERROR_CLOSED;
-         goto cleanup;
-      }
-      ptr += written;
-      remaining -= written;
+   if (snl_write(skt->file_descriptor, buf, length)) {
+      error = SNL_ERROR_CLOSED;
+      goto cleanup;
    }
 
    // update stats
@@ -229,6 +214,25 @@ cleanup:
    if (skt->cipher) free((void *)buf);
 
    return (error);
+}
+
+int
+snl_write(int fd, const void *buf, unsigned int len) {
+   unsigned int remaining = len;
+   char *ptr = (char *)buf;
+	int written;
+
+   while (remaining) {
+      if ((written = write(fd, ptr, remaining)) == -1) {
+         if (errno == EINTR) continue;
+         return (SNL_ERROR_SEND);
+      }
+
+      ptr += written;
+      remaining -= written;
+   }
+
+   return (SNL_ERROR_OK);
 }
 
 int
@@ -269,7 +273,7 @@ snl_listen(snl_socket_t *skt, unsigned short port) {
    }
 
    // set reuse address flag
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flg, sizeof (flg));
    }
 
@@ -288,7 +292,7 @@ snl_listen(snl_socket_t *skt, unsigned short port) {
       goto cleanup;
    }
 
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       if (listen(fd, connection_backlog)) {
          error = SNL_ERROR_LISTEN;
          goto cleanup;
@@ -308,8 +312,8 @@ cleanup:
    skt->file_descriptor = fd;
 
    switch (skt->protocol) {
-      case SNL_PROTO_RAW:
       case SNL_PROTO_TCP:
+      case SNL_PROTO_MSG:
          skt->worker_type = WORKER_THREAD_LISTEN;
       break;
 
@@ -378,7 +382,7 @@ snl_connect(snl_socket_t *skt, const char *host, unsigned short port) {
    // check, if we should broadcast
    if (!host) {
       if (skt->protocol == SNL_PROTO_UDP) broadcast = 1;
-      if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+      if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
          return (SNL_ERROR_CONNECT);
       }
    }
@@ -390,7 +394,7 @@ snl_connect(snl_socket_t *skt, const char *host, unsigned short port) {
    }
 
    // set all kinds of fancy socket options
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO,   &sto, sizeof (sto));
       setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,  &flg, sizeof (flg));
       setsockopt(fd, SOL_TCP,    TCP_KEEPCNT,   &cnt, sizeof (cnt));
@@ -427,7 +431,7 @@ snl_connect(snl_socket_t *skt, const char *host, unsigned short port) {
       }
    }
 
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       // save default connect timeout
       getsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &to, &len);
       // set new (shorter) connect timeout
@@ -443,14 +447,14 @@ snl_connect(snl_socket_t *skt, const char *host, unsigned short port) {
    }
 
    // reset socket connect timeout
-   if ((skt->protocol == SNL_PROTO_TCP) || (skt->protocol == SNL_PROTO_RAW)) {
+   if ((skt->protocol == SNL_PROTO_MSG) || (skt->protocol == SNL_PROTO_TCP)) {
       setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof (to));
    }
 
    // trigger worker thread
    switch (skt->protocol) {
-      case SNL_PROTO_RAW:
       case SNL_PROTO_TCP:
+      case SNL_PROTO_MSG:
          skt->worker_type = WORKER_THREAD_READ;
       break;
       case SNL_PROTO_UDP:
@@ -587,7 +591,7 @@ worker_start:
 
          // we repeat until the connection has been closed
          while (!skt->worker_stop) {
-            if (skt->protocol == SNL_PROTO_RAW) {
+            if (skt->protocol == SNL_PROTO_TCP) {
                // read one line
                length = 0;
                ptr = skt->data_buffer;

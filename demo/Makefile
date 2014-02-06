@@ -1,6 +1,6 @@
 -include ../Makefile.config
 
-TARGETS = webserver
+TARGETS = webserver udplistener udpsender
 
 DEFINES = -DVERSION=\"$(VERSION)\"
 

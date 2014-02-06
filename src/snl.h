@@ -77,9 +77,9 @@ typedef struct snl_socket_t {
    Enumeration of all possible connection types.
 */
 enum {
-   SNL_PROTO_TCP,       ///< stream socket
+   SNL_PROTO_MSG,       ///< stream socket
    SNL_PROTO_UDP,       ///< datagram socket
-   SNL_PROTO_RAW        ///< stream socket without packet header
+   SNL_PROTO_TCP        ///< stream socket without packet header
 };
 
 /**
@@ -179,14 +179,26 @@ int snl_send(snl_socket_t *skt, const void *buf, unsigned int len);
 int snl_accept(snl_socket_t *skt);
 
 /**
+	\brief   Send raw data over the wire
+	\param   fd <int> socket filedescriptor
+	\param   buf <const void *> pointer to buffer start
+	\param   len <unsigned int> length of data to send
+	\return 0 on success or negative error code
+
+	This function is used mainly internally but, you ever want to send
+	data over the wire all by yourself, you can use this function.
+*/
+int snl_write(int fd, const void *buf, unsigned int len);
+
+/**
    \brief   Start a thread to listen for incoming connections
    \param   skt <snl_socket_t *> pointer to socket
    \param   port <unsigned short> port number the server should listen on
    \return  0 on success or a negative error code
 
    To start the listening thread, this function must be used. Listening
-   means either waiting for incoming connections for SNL_PROTO_RAW or
-   SNL_PROTO_TCP sockets, or waiting for incoming datagrams if the
+   means either waiting for incoming connections for SNL_PROTO_TCP or
+   SNL_PROTO_MSG sockets, or waiting for incoming datagrams if the
    socket protocol is set to SNL_PROTO_UDP.
 */
 int snl_listen(snl_socket_t *skt, unsigned short port);
